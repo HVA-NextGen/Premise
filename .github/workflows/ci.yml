@@ -111,11 +111,7 @@ jobs:
           echo "WEB_NAME=$WEB_NAME" >> "$GITHUB_ENV"
 
       - name: Deploy artifact to App Service
-        run: |
-          az webapp deploy \
-            --resource-group "$AZURE_RESOURCE_GROUP" \
-            --name "$WEB_NAME" \
-            --src-path ./artifact/premise-web.zip \
-            --type zip \
-            --clean true \
-            --restart true
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.WEB_NAME }}
+          package: ./artifact/premise-web.zip
