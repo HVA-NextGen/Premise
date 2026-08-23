@@ -1,0 +1,134 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Lint, typecheck, test, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Unit, component & route tests
+        run: npm test
+
+      - name: Build deployable artifact
+        run: npm run build:standalone
+
+      - name: Create deployment ZIP
+        run: |
+          mkdir -p dist
+          (cd .next/standalone && zip -q -r ../../dist/premise-web.zip .)
+
+      - name: Upload web artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: webapp
+          path: dist/premise-web.zip
+          retention-days: 1
+
+  e2e:
+    name: End-to-end (no cloud credentials)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        run: npm run test:e2e
+
+  deploy:
+    name: Deploy to Azure App Service
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [verify, e2e]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    concurrency:
+      group: deploy-main
+      cancel-in-progress: false
+    env:
+      AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
+      AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+      AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+      APIM_GATEWAY_URL: ${{ vars.APIM_GATEWAY_URL }}
+      APIM_MODEL_DEPLOYMENT_NAME: ${{ vars.APIM_MODEL_DEPLOYMENT_NAME }}
+      APIM_API_VERSION: ${{ vars.APIM_API_VERSION }}
+      APIM_SUBSCRIPTION_KEY: ${{ secrets.APIM_SUBSCRIPTION_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download web artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: webapp
+          path: ./artifact
+
+      - name: Azure login (OIDC federated credential)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Provision infrastructure (Bicep)
+        run: |
+          WEB_NAME=$(az deployment sub create \
+            --name "premise-${GITHUB_RUN_ID}" \
+            --location "$AZURE_LOCATION" \
+            --template-file infra/main.bicep \
+            --parameters \
+              environmentName="$AZURE_ENV_NAME" \
+              location="$AZURE_LOCATION" \
+              resourceGroupName="$AZURE_RESOURCE_GROUP" \
+              apimGatewayUrl="$APIM_GATEWAY_URL" \
+              apimModelDeploymentName="$APIM_MODEL_DEPLOYMENT_NAME" \
+              apimApiVersion="$APIM_API_VERSION" \
+              apimSubscriptionKey="$APIM_SUBSCRIPTION_KEY" \
+            --query properties.outputs.WEB_NAME.value -o tsv)
+          echo "WEB_NAME=$WEB_NAME" >> "$GITHUB_ENV"
+
+      - name: Deploy artifact to App Service
+        run: |
+          az webapp deploy \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name "$WEB_NAME" \
+            --src-path ./artifact/premise-web.zip \
+            --type zip \
+            --clean true \
+            --restart true

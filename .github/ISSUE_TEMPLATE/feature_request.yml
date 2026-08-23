@@ -1,0 +1,48 @@
+name: Product feature
+description: Propose a change to the Premise product-brief app (suitable for GitHub Copilot coding agent).
+title: "[feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Premise is a product-manager helper. Keep the app free of GitHub
+        functionality — the model is reached through APIM in front of Microsoft
+        Foundry. Describe the change so Copilot can implement it end to end.
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Outcome
+      description: What should a user be able to do after this change?
+      placeholder: As a PM, I want each requirement to show a confidence level so I can triage faster.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Specific, testable conditions for "done".
+      placeholder: |
+        - The brief schema and JSON schema both include the new field.
+        - The prompt instructs the model to populate it.
+        - The UI renders it and the Markdown export includes it.
+        - Tests cover valid/invalid cases with the model boundary mocked.
+    validations:
+      required: true
+  - type: textarea
+    id: affected
+    attributes:
+      label: Likely files to touch
+      description: Optional pointers to keep the schema, prompt, UI, and tests in sync.
+      placeholder: src/lib/brief-schema.ts, src/lib/product-brief-prompt.ts, src/components/BriefResult.tsx, tests/**
+    validations:
+      required: false
+  - type: checkboxes
+    id: guardrails
+    attributes:
+      label: Guardrails
+      options:
+        - label: This change adds no GitHub functionality to the app.
+          required: true
+        - label: No model endpoint, key, or raw error is exposed to the browser.
+          required: true
