@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   verify:
-    name: Lint, typecheck, test, build
+    name: Verify, build, and package
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,6 +37,12 @@ jobs:
       - name: Build deployable artifact
         run: npm run build:standalone
 
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: End-to-end tests
+        run: npm run test:e2e
+
       - name: Create deployment ZIP
         run: |
           mkdir -p dist
@@ -50,31 +56,10 @@ jobs:
           path: dist/premise-web.zip
           retention-days: 1
 
-  e2e:
-    name: End-to-end (no cloud credentials)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
-
-      - name: Run Playwright tests
-        run: npm run test:e2e
-
   deploy:
     name: Deploy to Azure App Service
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [verify, e2e]
+    needs: verify
     runs-on: ubuntu-latest
     permissions:
       id-token: write

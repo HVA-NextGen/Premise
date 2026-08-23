@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Inter, IBM_Plex_Mono } from "next/font/google";
+import type { ReactNode } from "react";
 import "./globals.css";
 
 const displayFont = Space_Grotesk({
@@ -25,7 +26,7 @@ export const metadata: Metadata = {
     "Premise muuttaa ohjelmiston epicin tai ominaisuusidean jäsennellyksi, toteutuskelpoiseksi suunnitelmaksi.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="fi"
