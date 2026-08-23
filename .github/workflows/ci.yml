@@ -95,7 +95,7 @@ jobs:
 
       - name: Provision infrastructure (Bicep)
         run: |
-          WEB_NAME=$(az deployment sub create \
+          OUTPUTS=$(az deployment sub create \
             --name "premise-${GITHUB_RUN_ID}" \
             --location "$AZURE_LOCATION" \
             --template-file infra/main.bicep \
@@ -107,7 +107,8 @@ jobs:
               apimModelDeploymentName="$APIM_MODEL_DEPLOYMENT_NAME" \
               apimApiVersion="$APIM_API_VERSION" \
               apimSubscriptionKey="$APIM_SUBSCRIPTION_KEY" \
-            --query properties.outputs.WEB_NAME.value -o tsv)
+            --query properties.outputs -o json)
+          WEB_NAME=$(echo "$OUTPUTS" | jq -r 'to_entries[] | select(.key | ascii_downcase == "web_name") | .value.value')
           echo "WEB_NAME=$WEB_NAME" >> "$GITHUB_ENV"
 
       - name: Deploy artifact to App Service
