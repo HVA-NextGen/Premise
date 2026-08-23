@@ -58,7 +58,17 @@ jobs:
 
   deploy:
     name: Deploy to Azure App Service
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: >
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      vars.AZURE_CLIENT_ID != '' &&
+      vars.AZURE_TENANT_ID != '' &&
+      vars.AZURE_SUBSCRIPTION_ID != '' &&
+      vars.AZURE_ENV_NAME != '' &&
+      vars.AZURE_LOCATION != '' &&
+      vars.AZURE_RESOURCE_GROUP != '' &&
+      vars.APIM_GATEWAY_URL != '' &&
+      vars.APIM_MODEL_DEPLOYMENT_NAME != ''
     needs: verify
     runs-on: ubuntu-latest
     environment: production
