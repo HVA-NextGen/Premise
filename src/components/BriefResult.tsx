@@ -73,6 +73,25 @@ export function BriefResult({
       </section>
 
       <section className={styles.section}>
+        <h3 className={styles.sectionTitle}>Ongelma</h3>
+        <p className={styles.summary}>{brief.problem.statement}</p>
+        <ul className={styles.bulletList}>
+          <li>Nykytila: {brief.problem.currentState}</li>
+          <li>Vaikutus: {brief.problem.impact}</li>
+        </ul>
+      </section>
+
+      <section className={styles.section}>
+        <h3 className={styles.sectionTitle}>Tavoiteltu lopputulos</h3>
+        <p className={styles.summary}>{brief.desiredOutcome.statement}</p>
+        <ul className={styles.bulletList}>
+          {brief.desiredOutcome.successIndicators.map((indicator, index) => (
+            <li key={index}>{indicator}</li>
+          ))}
+        </ul>
+      </section>
+
+      <section className={styles.section}>
         <h3 className={styles.sectionTitle}>Oletukset</h3>
         <ul className={styles.bulletList}>
           {brief.assumptions.map((assumption, index) => (

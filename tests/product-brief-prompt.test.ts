@@ -14,11 +14,26 @@ describe("buildBriefUserPrompt", () => {
     expect(prompt).toContain(validInput.targetUsers);
     expect(prompt).toContain(validInput.evidence);
     expect(prompt).toContain(validInput.constraints);
+    expect(prompt).toContain(validInput.productContext);
+  });
+
+  it("tells the model not to assume capabilities when context is missing", () => {
+    const prompt = buildBriefUserPrompt({ ...validInput, productContext: "" });
+    expect(prompt).toContain("## Current product state");
+    expect(prompt).toContain("Do not assume any current capabilities");
   });
 
   it("notes when constraints are absent", () => {
     const prompt = buildBriefUserPrompt({ ...validInput, constraints: "" });
     expect(prompt).toContain("None provided.");
+  });
+});
+
+describe("BRIEF_SYSTEM_PROMPT", () => {
+  it("separates problem from desired outcome and grounds both", () => {
+    expect(BRIEF_SYSTEM_PROMPT).toContain("problem and the desired outcome");
+    expect(BRIEF_SYSTEM_PROMPT).toContain("Never invent current capabilities.");
+    expect(BRIEF_SYSTEM_PROMPT).toContain("record");
   });
 });
 

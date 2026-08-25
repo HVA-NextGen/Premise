@@ -8,6 +8,7 @@ import type { BriefInput } from "@/lib/brief-schema";
 
 const EMPTY: BriefInput = {
   productIdea: "",
+  productContext: "",
   targetUsers: "",
   evidence: "",
   constraints: "",
@@ -41,6 +42,13 @@ describe("BriefForm", () => {
     const idea = screen.getByLabelText(/Epic tai ominaisuus/);
     await userEvent.type(idea, "A new idea");
     expect(idea).toHaveValue("A new idea");
+  });
+
+  it("offers an optional current-state field", async () => {
+    render(<Harness />);
+    const context = screen.getByLabelText(/Nykytila/);
+    await userEvent.type(context, "Nykyinen portaali");
+    expect(context).toHaveValue("Nykyinen portaali");
   });
 
   it("submits the form", async () => {

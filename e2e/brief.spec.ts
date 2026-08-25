@@ -4,6 +4,16 @@ const briefResponse = {
   ok: true,
   brief: {
     summary: "A focused mobile tool that removes friction from expense capture.",
+    problem: {
+      statement: "Expense reports arrive late because capture happens long after the job.",
+      currentState:
+        "Today expenses are entered in a desktop portal that needs a connection.",
+      impact: "Finance closes the month late.",
+    },
+    desiredOutcome: {
+      statement: "Expenses are captured at the moment of spend.",
+      successIndicators: ["Median time from spend to submission drops below one day."],
+    },
     assumptions: ["Technicians carry a smartphone on every job."],
     requirements: [
       {
@@ -52,5 +62,9 @@ test("generates and displays a feature plan", async ({ page }) => {
     page.getByRole("article", { name: "Ominaisuussuunnitelma" }),
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Yhteenveto" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ongelma" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Tavoiteltu lopputulos" }),
+  ).toBeVisible();
   await expect(page.getByText("Offline receipt capture")).toBeVisible();
 });

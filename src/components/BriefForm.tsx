@@ -23,6 +23,14 @@ const FIELDS: FieldConfig[] = [
     multiline: true,
   },
   {
+    name: "productContext",
+    label: "Nykytila",
+    hint: "Valinnainen. Mitä tuote tekee jo nyt tällä alueella? Nykyiset toiminnot, integraatiot ja tunnetut rajoitteet.",
+    placeholder: "Potilastiedot näkyvät nyt viidessä erillisessä näkymässä…",
+    multiline: true,
+    optional: true,
+  },
+  {
     name: "targetUsers",
     label: "Kohdekäyttäjät",
     hint: "Kenelle tämä on tarkoitettu? Kuvaa käyttötilanne tarkasti.",

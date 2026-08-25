@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   briefInputSchema,
+  productBriefJsonSchema,
   productBriefSchema,
 } from "@/lib/brief-schema";
 import { validBrief, validInput } from "./fixtures";
@@ -25,6 +26,27 @@ describe("briefInputSchema", () => {
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.constraints).toBe("");
+    }
+  });
+
+  it("defaults optional product context to an empty string", () => {
+    const { productContext: _productContext, ...withoutContext } = validInput;
+    void _productContext;
+    const result = briefInputSchema.safeParse(withoutContext);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.productContext).toBe("");
+    }
+  });
+
+  it("rejects product context beyond the length limit", () => {
+    const result = briefInputSchema.safeParse({
+      ...validInput,
+      productContext: "a".repeat(2001),
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0]?.path[0]).toBe("productContext");
     }
   });
 
@@ -53,6 +75,34 @@ describe("productBriefSchema", () => {
       requirements: [{ title: "x", rationale: "y", priority: "urgent" }],
     };
     expect(productBriefSchema.safeParse(broken).success).toBe(false);
+  });
+
+  it("rejects a brief without a problem", () => {
+    const { problem: _problem, ...broken } = validBrief;
+    void _problem;
+    expect(productBriefSchema.safeParse(broken).success).toBe(false);
+  });
+
+  it("rejects a desired outcome with no success indicators", () => {
+    const broken = {
+      ...validBrief,
+      desiredOutcome: { ...validBrief.desiredOutcome, successIndicators: [] },
+    };
+    expect(productBriefSchema.safeParse(broken).success).toBe(false);
+  });
+
+  it("keeps the JSON schema in parity with the Zod schema", () => {
+    expect(productBriefJsonSchema.required).toContain("problem");
+    expect(productBriefJsonSchema.required).toContain("desiredOutcome");
+    expect(productBriefJsonSchema.properties.problem.required).toEqual([
+      "statement",
+      "currentState",
+      "impact",
+    ]);
+    expect(productBriefJsonSchema.properties.desiredOutcome.required).toEqual([
+      "statement",
+      "successIndicators",
+    ]);
   });
 
   it("rejects a brief with no requirements", () => {

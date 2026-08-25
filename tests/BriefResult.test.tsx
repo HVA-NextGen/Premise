@@ -17,6 +17,23 @@ describe("BriefResult", () => {
     expect(screen.getByText("Pakollinen")).toBeInTheDocument();
   });
 
+  it("renders the problem and desired outcome before the requirements", () => {
+    render(
+      <BriefResult brief={validBrief} copied={false} onCopy={() => {}} onReset={() => {}} />,
+    );
+    const headings = screen
+      .getAllByRole("heading", { level: 3 })
+      .map((heading) => heading.textContent);
+    expect(headings.indexOf("Ongelma")).toBeLessThan(headings.indexOf("Vaatimukset"));
+    expect(headings.indexOf("Tavoiteltu lopputulos")).toBeLessThan(
+      headings.indexOf("Vaatimukset"),
+    );
+    expect(screen.getByText(validBrief.problem.statement)).toBeInTheDocument();
+    expect(
+      screen.getByText(validBrief.desiredOutcome.successIndicators[0]),
+    ).toBeInTheDocument();
+  });
+
   it("labels the region for assistive tech", () => {
     render(
       <BriefResult brief={validBrief} copied={false} onCopy={() => {}} onReset={() => {}} />,
