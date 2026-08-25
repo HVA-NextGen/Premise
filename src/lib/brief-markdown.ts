@@ -23,7 +23,30 @@ export function briefToMarkdown(
     lines.push(`**Epic tai ominaisuus:** ${input.productIdea.trim()}`, "");
   }
 
+  if (input?.productContext?.trim()) {
+    lines.push(`**Tuotteen nykytila:** ${input.productContext.trim()}`, "");
+  }
+
   lines.push("## Yhteenveto", brief.summary.trim(), "");
+
+  lines.push(
+    "## Ongelma",
+    brief.problem.statement.trim(),
+    "",
+    `- **Nykytila:** ${brief.problem.currentState}`,
+    `- **Vaikutus:** ${brief.problem.impact}`,
+    "",
+  );
+
+  lines.push(
+    "## Tavoiteltu lopputulos",
+    brief.desiredOutcome.statement.trim(),
+    "",
+  );
+  for (const indicator of brief.desiredOutcome.successIndicators) {
+    lines.push(`- ${indicator}`);
+  }
+  lines.push("");
 
   lines.push("## Oletukset");
   for (const assumption of brief.assumptions) {

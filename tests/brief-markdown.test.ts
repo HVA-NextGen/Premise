@@ -8,11 +8,29 @@ describe("briefToMarkdown", () => {
     const markdown = briefToMarkdown(validBrief, validInput);
     expect(markdown).toContain("# Ominaisuussuunnitelma");
     expect(markdown).toContain("## Yhteenveto");
+    expect(markdown).toContain("## Ongelma");
+    expect(markdown).toContain("## Tavoiteltu lopputulos");
     expect(markdown).toContain("## Oletukset");
     expect(markdown).toContain("## Vaatimukset");
     expect(markdown).toContain("## Hyväksymiskriteerit");
     expect(markdown).toContain("## Riskit");
     expect(markdown).toContain("## Kokeilut");
+  });
+
+  it("preserves the problem and the desired outcome", () => {
+    const markdown = briefToMarkdown(validBrief, validInput);
+    expect(markdown).toContain(validBrief.problem.statement);
+    expect(markdown).toContain(`**Nykytila:** ${validBrief.problem.currentState}`);
+    expect(markdown).toContain(`**Vaikutus:** ${validBrief.problem.impact}`);
+    expect(markdown).toContain(validBrief.desiredOutcome.statement);
+    expect(markdown).toContain(validBrief.desiredOutcome.successIndicators[0]);
+  });
+
+  it("includes the supplied product context", () => {
+    const markdown = briefToMarkdown(validBrief, validInput);
+    expect(markdown).toContain(
+      `**Tuotteen nykytila:** ${validInput.productContext}`,
+    );
   });
 
   it("uppercases priority and severity tags", () => {

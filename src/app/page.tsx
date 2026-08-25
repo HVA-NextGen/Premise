@@ -18,6 +18,7 @@ type Status = "idle" | "loading" | "success" | "error";
 
 const EMPTY_INPUT: BriefInput = {
   productIdea: "",
+  productContext: "",
   targetUsers: "",
   evidence: "",
   constraints: "",

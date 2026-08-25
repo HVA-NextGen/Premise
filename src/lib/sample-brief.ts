@@ -4,6 +4,8 @@ import type { BriefInput } from "@/lib/brief-schema";
 export const SAMPLE_BRIEF_INPUT: BriefInput = {
   productIdea:
     "Lisätään nykyiseen sähköiseen potilastietojärjestelmään yhtenäinen potilasaikajana, joka kokoaa potilaan käynnit, lääkitykset, laboratoriotulokset ja ammattilaisten kirjaukset yhteen kronologiseen näkymään.",
+  productContext:
+    "Nykyisessä potilastietojärjestelmässä käynnit, lääkitykset, laboratoriotulokset ja kirjaukset ovat omissa moduuleissaan, joilla on erilliset hakunäkymät. Tiedot luetaan FHIR-rajapinnan kautta, eikä yhdistettyä aikajananäkymää ole olemassa.",
   targetUsers:
     "Keskisuurten avovastaanottojen perusterveydenhuollon lääkärit ja hoitajat, jotka tapaavat 20–30 potilasta päivässä ja kokoavat nyt potilaan historian 5–6 erillisestä näkymästä ennen jokaista käyntiä.",
   evidence:

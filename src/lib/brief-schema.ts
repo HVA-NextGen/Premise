@@ -16,6 +16,12 @@ export const briefInputSchema = z.object({
     .trim()
     .min(20, "Kuvaa epic tai ominaisuus vähintään 20 merkillä.")
     .max(2000, "Epicin tai ominaisuuden kuvaus saa sisältää enintään 2 000 merkkiä."),
+  productContext: z
+    .string()
+    .trim()
+    .max(2000, "Nykytilan kuvaus saa sisältää enintään 2 000 merkkiä.")
+    .optional()
+    .default(""),
   targetUsers: z
     .string()
     .trim()
@@ -32,6 +38,17 @@ export const briefInputSchema = z.object({
     .max(1000, "Reunaehdot saavat sisältää enintään 1 000 merkkiä.")
     .optional()
     .default(""),
+});
+
+export const problemSchema = z.object({
+  statement: z.string().min(1),
+  currentState: z.string().min(1),
+  impact: z.string().min(1),
+});
+
+export const desiredOutcomeSchema = z.object({
+  statement: z.string().min(1),
+  successIndicators: z.array(z.string().min(1)).min(1),
 });
 
 export const requirementSchema = z.object({
@@ -54,6 +71,8 @@ export const experimentSchema = z.object({
 
 export const productBriefSchema = z.object({
   summary: z.string().min(1),
+  problem: problemSchema,
+  desiredOutcome: desiredOutcomeSchema,
   assumptions: z.array(z.string().min(1)).min(1),
   requirements: z.array(requirementSchema).min(1),
   acceptanceCriteria: z.array(z.string().min(1)).min(1),
@@ -62,6 +81,8 @@ export const productBriefSchema = z.object({
 });
 
 export type BriefInput = z.infer<typeof briefInputSchema>;
+export type Problem = z.infer<typeof problemSchema>;
+export type DesiredOutcome = z.infer<typeof desiredOutcomeSchema>;
 export type Requirement = z.infer<typeof requirementSchema>;
 export type Risk = z.infer<typeof riskSchema>;
 export type Experiment = z.infer<typeof experimentSchema>;
@@ -105,6 +126,8 @@ export const productBriefJsonSchema = {
   additionalProperties: false,
   required: [
     "summary",
+    "problem",
+    "desiredOutcome",
     "assumptions",
     "requirements",
     "acceptanceCriteria",
@@ -113,6 +136,25 @@ export const productBriefJsonSchema = {
   ],
   properties: {
     summary: { type: "string" },
+    problem: {
+      type: "object",
+      additionalProperties: false,
+      required: ["statement", "currentState", "impact"],
+      properties: {
+        statement: { type: "string" },
+        currentState: { type: "string" },
+        impact: { type: "string" },
+      },
+    },
+    desiredOutcome: {
+      type: "object",
+      additionalProperties: false,
+      required: ["statement", "successIndicators"],
+      properties: {
+        statement: { type: "string" },
+        successIndicators: { type: "array", items: { type: "string" } },
+      },
+    },
     assumptions: { type: "array", items: { type: "string" } },
     requirements: {
       type: "array",
