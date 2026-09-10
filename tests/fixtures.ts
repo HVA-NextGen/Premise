@@ -13,14 +13,38 @@ export const validBrief: ProductBrief = {
   assumptions: ["Technicians carry a smartphone on every job."],
   requirements: [
     {
+      id: "R1",
       title: "Offline receipt capture",
       rationale: "Signal is unreliable at many sites.",
       priority: "must",
+      dependencies: [
+        {
+          type: "external",
+          requirementId: null,
+          description: "Mobile platform team must ship the shared storage module.",
+          assumption: false,
+        },
+      ],
     },
     {
+      id: "R2",
       title: "Concur sync",
       rationale: "Avoids double entry into the system of record.",
       priority: "should",
+      dependencies: [
+        {
+          type: "requirement",
+          requirementId: "R1",
+          description: "Sync needs locally captured receipts to exist first.",
+          assumption: false,
+        },
+        {
+          type: "unknown",
+          requirementId: null,
+          description: "Concur API rate limits are not documented in the evidence.",
+          assumption: true,
+        },
+      ],
     },
   ],
   acceptanceCriteria: [
@@ -40,4 +64,13 @@ export const validBrief: ProductBrief = {
       successMetric: "Late submissions drop below 10%.",
     },
   ],
+};
+
+/** A brief whose requirements declare no dependencies at all. */
+export const briefWithoutDependencies: ProductBrief = {
+  ...validBrief,
+  requirements: validBrief.requirements.map((requirement) => ({
+    ...requirement,
+    dependencies: [],
+  })),
 };

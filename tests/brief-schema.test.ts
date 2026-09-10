@@ -4,7 +4,7 @@ import {
   briefInputSchema,
   productBriefSchema,
 } from "@/lib/brief-schema";
-import { validBrief, validInput } from "./fixtures";
+import { briefWithoutDependencies, validBrief, validInput } from "./fixtures";
 
 describe("briefInputSchema", () => {
   it("accepts valid input and trims strings", () => {
@@ -47,10 +47,16 @@ describe("productBriefSchema", () => {
     expect(productBriefSchema.safeParse(validBrief).success).toBe(true);
   });
 
+  it("accepts a brief whose requirements declare no dependencies", () => {
+    expect(productBriefSchema.safeParse(briefWithoutDependencies).success).toBe(true);
+  });
+
   it("rejects an unknown priority value", () => {
     const broken = {
       ...validBrief,
-      requirements: [{ title: "x", rationale: "y", priority: "urgent" }],
+      requirements: [
+        { id: "R1", title: "x", rationale: "y", priority: "urgent", dependencies: [] },
+      ],
     };
     expect(productBriefSchema.safeParse(broken).success).toBe(false);
   });
@@ -59,4 +65,94 @@ describe("productBriefSchema", () => {
     const broken = { ...validBrief, requirements: [] };
     expect(productBriefSchema.safeParse(broken).success).toBe(false);
   });
+
+  it("rejects a requirement id that is off the R1, R2, ... scheme", () => {
+    const broken = withRequirements([{ ...baseRequirement, id: "REQ-1" }]);
+    expect(productBriefSchema.safeParse(broken).success).toBe(false);
+  });
+
+  it("rejects duplicate requirement ids", () => {
+    const broken = withRequirements([baseRequirement, { ...baseRequirement }]);
+    expect(productBriefSchema.safeParse(broken).success).toBe(false);
+  });
+
+  it("rejects a dependency pointing at an unknown requirement id", () => {
+    const broken = withRequirements([
+      {
+        ...baseRequirement,
+        dependencies: [
+          {
+            type: "requirement",
+            requirementId: "R9",
+            description: "Depends on something that does not exist.",
+            assumption: false,
+          },
+        ],
+      },
+    ]);
+    expect(productBriefSchema.safeParse(broken).success).toBe(false);
+  });
+
+  it("rejects a requirement that depends on itself", () => {
+    const broken = withRequirements([
+      {
+        ...baseRequirement,
+        dependencies: [
+          {
+            type: "requirement",
+            requirementId: "R1",
+            description: "Circular reference.",
+            assumption: false,
+          },
+        ],
+      },
+    ]);
+    expect(productBriefSchema.safeParse(broken).success).toBe(false);
+  });
+
+  it("rejects a requirement dependency without a reference", () => {
+    const broken = withRequirements([
+      {
+        ...baseRequirement,
+        dependencies: [
+          {
+            type: "requirement",
+            requirementId: null,
+            description: "Missing reference.",
+            assumption: false,
+          },
+        ],
+      },
+    ]);
+    expect(productBriefSchema.safeParse(broken).success).toBe(false);
+  });
+
+  it("rejects an external dependency that carries a requirement reference", () => {
+    const broken = withRequirements([
+      {
+        ...baseRequirement,
+        dependencies: [
+          {
+            type: "external",
+            requirementId: "R1",
+            description: "External blockers cannot reference requirements.",
+            assumption: false,
+          },
+        ],
+      },
+    ]);
+    expect(productBriefSchema.safeParse(broken).success).toBe(false);
+  });
 });
+
+const baseRequirement = {
+  id: "R1",
+  title: "Offline receipt capture",
+  rationale: "Signal is unreliable at many sites.",
+  priority: "must",
+  dependencies: [],
+};
+
+function withRequirements(requirements: unknown[]) {
+  return { ...validBrief, requirements };
+}

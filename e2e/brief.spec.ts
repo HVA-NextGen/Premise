@@ -7,9 +7,18 @@ const briefResponse = {
     assumptions: ["Technicians carry a smartphone on every job."],
     requirements: [
       {
+        id: "R1",
         title: "Offline receipt capture",
         rationale: "Signal is unreliable at many sites.",
         priority: "must",
+        dependencies: [
+          {
+            type: "external",
+            requirementId: null,
+            description: "Mobile platform team must ship the shared storage module.",
+            assumption: false,
+          },
+        ],
       },
     ],
     acceptanceCriteria: [
@@ -52,5 +61,8 @@ test("generates and displays a feature plan", async ({ page }) => {
     page.getByRole("article", { name: "Ominaisuussuunnitelma" }),
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Yhteenveto" })).toBeVisible();
-  await expect(page.getByText("Offline receipt capture")).toBeVisible();
+  await expect(page.getByText("Offline receipt capture").first()).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Riippuvuudet ja järjestys" }),
+  ).toBeVisible();
 });

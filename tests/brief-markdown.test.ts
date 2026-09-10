@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { briefToMarkdown } from "@/lib/brief-markdown";
-import { validBrief, validInput } from "./fixtures";
+import { briefWithoutDependencies, validBrief, validInput } from "./fixtures";
 
 describe("briefToMarkdown", () => {
   it("renders all sections as headings", () => {
@@ -11,6 +11,7 @@ describe("briefToMarkdown", () => {
     expect(markdown).toContain("## Oletukset");
     expect(markdown).toContain("## Vaatimukset");
     expect(markdown).toContain("## Hyväksymiskriteerit");
+    expect(markdown).toContain("## Riippuvuudet ja järjestys");
     expect(markdown).toContain("## Riskit");
     expect(markdown).toContain("## Kokeilut");
   });
@@ -29,6 +30,22 @@ describe("briefToMarkdown", () => {
   it("omits the epic or feature line when no input is given", () => {
     const markdown = briefToMarkdown(validBrief);
     expect(markdown).not.toContain("**Epic tai ominaisuus:**");
+  });
+
+  it("exports dependencies with their type and source requirement", () => {
+    const markdown = briefToMarkdown(validBrief);
+    expect(markdown).toContain(
+      "- **R2 Concur sync** → [VAATIMUS] R1 Offline receipt capture: Sync needs locally captured receipts to exist first.",
+    );
+    expect(markdown).toContain("[ULKOINEN]");
+    expect(markdown).toContain("[EPÄSELVÄ]");
+    expect(markdown).toContain("_(oletus)_");
+  });
+
+  it("notes when a brief has no dependencies", () => {
+    const markdown = briefToMarkdown(briefWithoutDependencies);
+    expect(markdown).toContain("## Riippuvuudet ja järjestys");
+    expect(markdown).toContain("- Riippuvuuksia ei tunnistettu.");
   });
 
   it("ends with a single trailing newline", () => {
