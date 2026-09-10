@@ -7,7 +7,7 @@ features in existing software products. Enter a proposed feature, its target
 users, supporting evidence, and constraints; a model hosted in **Microsoft
 Foundry** and consumed **through Azure API Management (APIM)** returns a
 structured, implementation-ready feature plan: summary, assumptions, prioritized
-requirements, acceptance criteria, risks, and experiments.
+requirements with their dependencies, acceptance criteria, risks, and experiments.
 
 ## Architecture
 

@@ -9,6 +9,10 @@ import { z } from "zod";
 
 export const PRIORITY_VALUES = ["must", "should", "could"] as const;
 export const SEVERITY_VALUES = ["low", "medium", "high"] as const;
+export const DEPENDENCY_TYPE_VALUES = ["requirement", "external", "unknown"] as const;
+
+/** Stable requirement identifier scheme: R1, R2, R3, ... */
+export const REQUIREMENT_ID_PATTERN = /^R[1-9][0-9]*$/;
 
 export const briefInputSchema = z.object({
   productIdea: z
@@ -34,10 +38,41 @@ export const briefInputSchema = z.object({
     .default(""),
 });
 
+/**
+ * A single delivery dependency of a requirement. `requirementId` is only used by
+ * the "requirement" type; external blockers and unknowns carry a null reference
+ * and describe the blocker in free text.
+ */
+export const dependencySchema = z
+  .object({
+    type: z.enum(DEPENDENCY_TYPE_VALUES),
+    requirementId: z.string().regex(REQUIREMENT_ID_PATTERN).nullable(),
+    description: z.string().min(1),
+    assumption: z.boolean(),
+  })
+  .superRefine((dependency, ctx) => {
+    if (dependency.type === "requirement" && dependency.requirementId === null) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["requirementId"],
+        message: "Vaatimusriippuvuus tarvitsee vaatimustunnisteen.",
+      });
+    }
+    if (dependency.type !== "requirement" && dependency.requirementId !== null) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["requirementId"],
+        message: "Vain vaatimusriippuvuudella voi olla vaatimustunniste.",
+      });
+    }
+  });
+
 export const requirementSchema = z.object({
+  id: z.string().regex(REQUIREMENT_ID_PATTERN),
   title: z.string().min(1),
   rationale: z.string().min(1),
   priority: z.enum(PRIORITY_VALUES),
+  dependencies: z.array(dependencySchema),
 });
 
 export const riskSchema = z.object({
@@ -52,23 +87,67 @@ export const experimentSchema = z.object({
   successMetric: z.string().min(1),
 });
 
-export const productBriefSchema = z.object({
-  summary: z.string().min(1),
-  assumptions: z.array(z.string().min(1)).min(1),
-  requirements: z.array(requirementSchema).min(1),
-  acceptanceCriteria: z.array(z.string().min(1)).min(1),
-  risks: z.array(riskSchema).min(1),
-  experiments: z.array(experimentSchema).min(1),
-});
+export const productBriefSchema = z
+  .object({
+    summary: z.string().min(1),
+    assumptions: z.array(z.string().min(1)).min(1),
+    requirements: z.array(requirementSchema).min(1),
+    acceptanceCriteria: z.array(z.string().min(1)).min(1),
+    risks: z.array(riskSchema).min(1),
+    experiments: z.array(experimentSchema).min(1),
+  })
+  .superRefine((brief, ctx) => {
+    const seen = new Set<string>();
+    brief.requirements.forEach((requirement, index) => {
+      if (seen.has(requirement.id)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["requirements", index, "id"],
+          message: "Vaatimustunnisteen on oltava yksilöllinen.",
+        });
+      }
+      seen.add(requirement.id);
+    });
+
+    brief.requirements.forEach((requirement, index) => {
+      requirement.dependencies.forEach((dependency, dependencyIndex) => {
+        if (dependency.type !== "requirement" || dependency.requirementId === null) {
+          return;
+        }
+        const path = [
+          "requirements",
+          index,
+          "dependencies",
+          dependencyIndex,
+          "requirementId",
+        ];
+        if (!seen.has(dependency.requirementId)) {
+          ctx.addIssue({
+            code: "custom",
+            path,
+            message: "Riippuvuus viittaa tuntemattomaan vaatimukseen.",
+          });
+        } else if (dependency.requirementId === requirement.id) {
+          ctx.addIssue({
+            code: "custom",
+            path,
+            message: "Vaatimus ei voi riippua itsestään.",
+          });
+        }
+      });
+    });
+  });
 
 export type BriefInput = z.infer<typeof briefInputSchema>;
 export type Requirement = z.infer<typeof requirementSchema>;
+export type Dependency = z.infer<typeof dependencySchema>;
 export type Risk = z.infer<typeof riskSchema>;
 export type Experiment = z.infer<typeof experimentSchema>;
 export type ProductBrief = z.infer<typeof productBriefSchema>;
 
 export type Priority = (typeof PRIORITY_VALUES)[number];
 export type Severity = (typeof SEVERITY_VALUES)[number];
+export type DependencyType = (typeof DEPENDENCY_TYPE_VALUES)[number];
 
 /** Stable success/error envelope returned by the brief API. */
 export type BriefErrorCode =
@@ -119,11 +198,26 @@ export const productBriefJsonSchema = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["title", "rationale", "priority"],
+        required: ["id", "title", "rationale", "priority", "dependencies"],
         properties: {
+          id: { type: "string", pattern: "^R[1-9][0-9]*$" },
           title: { type: "string" },
           rationale: { type: "string" },
           priority: { type: "string", enum: [...PRIORITY_VALUES] },
+          dependencies: {
+            type: "array",
+            items: {
+              type: "object",
+              additionalProperties: false,
+              required: ["type", "requirementId", "description", "assumption"],
+              properties: {
+                type: { type: "string", enum: [...DEPENDENCY_TYPE_VALUES] },
+                requirementId: { type: ["string", "null"] },
+                description: { type: "string" },
+                assumption: { type: "boolean" },
+              },
+            },
+          },
         },
       },
     },

@@ -1,6 +1,8 @@
 "use client";
 
+import { collectDependencyLinks } from "@/lib/brief-dependencies";
 import type {
+  DependencyType,
   Priority,
   ProductBrief,
   Severity,
@@ -31,6 +33,12 @@ const SEVERITY_LABEL: Record<Severity, string> = {
   low: "Matala",
 };
 
+const DEPENDENCY_TYPE_LABEL: Record<DependencyType, string> = {
+  requirement: "Vaatimus",
+  external: "Ulkoinen",
+  unknown: "Epäselvä",
+};
+
 interface BriefResultProps {
   brief: ProductBrief;
   copied: boolean;
@@ -44,6 +52,8 @@ export function BriefResult({
   onCopy,
   onReset,
 }: BriefResultProps) {
+  const dependencyLinks = collectDependencyLinks(brief);
+
   return (
     <article aria-labelledby="brief-heading" className={styles.result}>
       <header className={styles.resultHead}>
@@ -90,12 +100,43 @@ export function BriefResult({
                 {PRIORITY_LABEL[requirement.priority]}
               </span>
               <div className={styles.itemBody}>
-                <p className={styles.itemTitle}>{requirement.title}</p>
+                <p className={styles.itemTitle}>
+                  <span className={styles.itemId}>{requirement.id}</span>
+                  {requirement.title}
+                </p>
                 <p className={styles.itemMeta}>{requirement.rationale}</p>
               </div>
             </li>
           ))}
         </ul>
+      </section>
+
+      <section className={styles.section}>
+        <h3 className={styles.sectionTitle}>Riippuvuudet ja järjestys</h3>
+        {dependencyLinks.length === 0 ? (
+          <p className={styles.itemMeta}>Riippuvuuksia ei tunnistettu.</p>
+        ) : (
+          <ul className={styles.list}>
+            {dependencyLinks.map(({ requirement, dependency, target }, index) => (
+              <li className={styles.item} key={index}>
+                <span className={`${styles.tag} ${styles.tagNeutral}`}>
+                  {DEPENDENCY_TYPE_LABEL[dependency.type]}
+                </span>
+                <div className={styles.itemBody}>
+                  <p className={styles.itemTitle}>
+                    <span className={styles.itemId}>{requirement.id}</span>
+                    {requirement.title}
+                    {target ? ` → ${target.id} ${target.title}` : ""}
+                  </p>
+                  <p className={styles.itemMeta}>
+                    {dependency.description}
+                    {dependency.assumption ? " (oletus)" : ""}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className={styles.section}>

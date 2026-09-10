@@ -22,6 +22,20 @@ describe("buildBriefUserPrompt", () => {
   });
 });
 
+describe("BRIEF_SYSTEM_PROMPT", () => {
+  it("explains the requirement id scheme and dependency types", () => {
+    expect(BRIEF_SYSTEM_PROMPT).toContain("R1, R2, R3");
+    expect(BRIEF_SYSTEM_PROMPT).toContain("'external'");
+    expect(BRIEF_SYSTEM_PROMPT).toContain("'unknown'");
+  });
+
+  it("forbids invented blockers and requires inferred ones to be assumptions", () => {
+    expect(BRIEF_SYSTEM_PROMPT).toContain("Do not invent blockers.");
+    expect(BRIEF_SYSTEM_PROMPT).toContain("'assumption' to true");
+    expect(BRIEF_SYSTEM_PROMPT).toContain("current state, evidence, and constraints");
+  });
+});
+
 describe("buildBriefMessages", () => {
   it("pairs the system prompt with the user prompt", () => {
     const messages = buildBriefMessages(validInput);

@@ -307,6 +307,13 @@
   font-weight: 600;
 }
 
+.itemId {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+  margin-right: var(--space-2);
+}
+
 .itemMeta {
   color: var(--ink-soft);
   font-size: 0.9rem;
@@ -344,6 +351,12 @@
 .tagLow {
   background: var(--green-wash);
   color: var(--green);
+  border-color: transparent;
+}
+
+.tagNeutral {
+  background: var(--teal-wash);
+  color: var(--teal-strong);
   border-color: transparent;
 }
 

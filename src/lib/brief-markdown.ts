@@ -1,10 +1,17 @@
-import type { BriefInput, ProductBrief } from "@/lib/brief-schema";
+import { collectDependencyLinks } from "@/lib/brief-dependencies";
+import type { BriefInput, DependencyType, ProductBrief } from "@/lib/brief-schema";
 
 const PRIORITY_LABEL = {
   must: "PAKOLLINEN",
   should: "SUOSITELTAVA",
   could: "MAHDOLLINEN",
 } as const;
+
+const DEPENDENCY_TYPE_LABEL: Record<DependencyType, string> = {
+  requirement: "VAATIMUS",
+  external: "ULKOINEN",
+  unknown: "EPÄSELVÄ",
+};
 
 const SEVERITY_LABEL = {
   high: "KORKEA",
@@ -34,7 +41,23 @@ export function briefToMarkdown(
   lines.push("## Vaatimukset");
   for (const requirement of brief.requirements) {
     lines.push(
-      `- **[${PRIORITY_LABEL[requirement.priority]}] ${requirement.title}** — ${requirement.rationale}`,
+      `- **[${PRIORITY_LABEL[requirement.priority]}] ${requirement.id} ${requirement.title}** — ${requirement.rationale}`,
+    );
+  }
+  lines.push("");
+
+  lines.push("## Riippuvuudet ja järjestys");
+  const dependencyLinks = collectDependencyLinks(brief);
+  if (dependencyLinks.length === 0) {
+    lines.push("- Riippuvuuksia ei tunnistettu.");
+  }
+  for (const { requirement, dependency, target } of dependencyLinks) {
+    const targetLabel = target ? `${target.id} ${target.title}` : "";
+    const suffix = dependency.assumption ? " _(oletus)_" : "";
+    lines.push(
+      `- **${requirement.id} ${requirement.title}** → [${DEPENDENCY_TYPE_LABEL[dependency.type]}]${
+        targetLabel ? ` ${targetLabel}:` : ""
+      } ${dependency.description}${suffix}`,
     );
   }
   lines.push("");
